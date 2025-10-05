@@ -1,0 +1,190 @@
+:root {
+    --bg-color: #fff;
+    --text-color: #000;
+    --toggle-bg: #1a1a1a;
+    --toggle-thumb: #fff;
+}
+
+.dark-mode {
+    --bg-color: #282c35;
+    --text-color: #fff;
+    --toggle-bg: #444;
+    --toggle-thumb: #ddd;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+.bouton {
+    display: inline-block;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--bg-color);
+    background-color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    text-decoration: none; /* pour <a> */
+    text-align: center;
+    min-width: 160px;
+}
+
+/* Effet hover */
+.bouton:hover {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Effet quand on clique */
+.bouton:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.navbar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 15px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+.navbar .lien {
+    cursor: pointer;
+}
+.navbar .lien:hover {
+    text-decoration: underline;
+}
+#titreNavbar {
+    cursor: pointer;
+}
+main {
+    #divResultat {
+        display: flex;
+        justify-content: center;
+        text-align: center;
+        margin-bottom: 20px;
+        table {
+            border-collapse: collapse;
+            border: 3px solid var(--text-color);
+
+            tr {
+                height: 40px;
+            }
+            td {
+                width: 40px;
+                border: 1px solid var(--text-color);
+                cursor: pointer;
+            }
+            td.erreurSudoku input {
+                color: red;
+            }
+            td.validiteSudoku input {
+                color: green;
+            }
+            tr:nth-child(3),
+            tr:nth-child(6) {
+                border-bottom: 3px solid var(--text-color);
+            }
+
+            td:nth-child(3n) {
+                border-right: 3px solid var(--text-color);
+            }
+
+            .inputCaseSudoku {
+                background-color: var(--bg-color);
+                width: 37px;
+                height: 37px;
+                border: none;
+                font-size: 1em;
+                text-align: center;
+                transition: background-color 0.3s, color 0.5s ease;
+
+                color: var(--text-color);
+            }
+            .inputCaseSudoku:focus {
+                outline: none;
+                box-shadow: none;
+            }
+        }
+    }
+    #divBoutons {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        a {
+            margin-left: 10px;
+        }
+    }
+    #divBoutonsPrincipale {
+        margin-top: 7px;
+        margin-bottom: 20px;
+    }
+}
+
+/* Gestion du toogle dark mode */
+.toggle-track {
+    background-color: var(--toggle-bg);
+    border-radius: 50px; /* plus arrondi */
+    cursor: pointer;
+    display: flex;
+    height: 38px; /* ← hauteur augmentée */
+    position: relative;
+    user-select: none;
+    width: 85px; /* ← largeur augmentée */
+    border: 0;
+}
+
+.toggle-moon,
+.toggle-sun {
+    align-items: center;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 4px; /* un peu plus d'espace */
+    width: 50%;
+}
+
+.toggle-thumb {
+    background-color: #fff;
+    border-radius: 50%;
+    height: 30px; /* ← taille du rond adaptée */
+    width: 30px;
+    left: 4px; /* marge adaptée */
+    top: 4px;
+    position: absolute;
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Translation : largeur totale - taille du bouton - marge gauche */
+.dark-mode .toggle-thumb {
+    transform: translateX(47px); /* 85 - 30 - 8 ≈ 47 */
+}
+#divTest {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
