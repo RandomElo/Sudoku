@@ -223,11 +223,8 @@ function afficherSudoku(element, type = "string", affichage) {
 
                         // Forcer le DOM à reconnaître le nouvel élément
                         const div = td.querySelector(".divSvgReponse");
-
-                        // Utiliser un setTimeout très court pour déclencher la transition
-                        setTimeout(() => {
-                            div.classList.add("show");
-                        }, 10);
+                        div.offsetHeight;
+                        div.classList.add("show");
 
                         setTimeout(() => {
                             e.target.focus();
@@ -235,14 +232,11 @@ function afficherSudoku(element, type = "string", affichage) {
                         }, 2000);
                     } else {
                         td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMauvaiseReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>`;
-                        
+
                         // Forcer le DOM à reconnaître le nouvel élément
                         const div = td.querySelector(".divSvgReponse");
-
-                        // Utiliser un setTimeout très court pour déclencher la transition
-                        setTimeout(() => {
-                            div.classList.add("show");
-                        }, 10);
+                        div.classList.add("show");
+                        div.offsetHeight;
 
                         setTimeout(() => {
                             td.innerHTML = `<input type="text" class="inputCaseSudoku" />`;
@@ -264,16 +258,45 @@ function afficherSudoku(element, type = "string", affichage) {
     cellulesSansInput.forEach((cellule) => {
         cellule.addEventListener("click", (e) => {
             const valeurCellule = e.target.innerText;
+            if (e.target.classList.contains("celluleCommune")) {
+                for (const cellule of cellules) {
+                    cellule.classList.remove("celluleCommune");
+                    cellule.classList.remove("celluleAnnexe");
+                }
+                return;
+            }
             // Je met à toutes les cellules un fond blanc
             for (const cellule of cellules) {
-                cellule.style.backgroundColor = "#fff";
+                cellule.classList.remove("celluleCommune");
             }
 
             const cellulesCorrespondante = Array.from(cellules).filter((td) => td.textContent == valeurCellule);
 
             for (const cellule of cellulesCorrespondante) {
-                cellule.style.backgroundColor = "#b8b8b8ff";
+                cellule.classList.add("celluleCommune");
+                const l = Number(cellule.dataset.l);
+                const c = Number(cellule.dataset.c);
+
+                const cellulesCommuneHorizontale = document.querySelectorAll(`[data-l="${l}"]`);
+
+                for (const c of cellulesCommuneHorizontale) {
+                    if (cellule.dataset != c.dataset) {
+                        c.classList.add("celluleAnnexe");
+                    }
+                }
+
+                const cellulesCommuneVerticale = document.querySelectorAll(`[data-c="${c}"]`);
+
+                for (const c of cellulesCommuneVerticale) {
+                    if (cellule.dataset != c.dataset) {
+                        c.classList.add("celluleAnnexe");
+                    }
+                }
             }
+            // Ajout du bouton pour la suppression du filtre
+            const divBoutonsContenu = document.querySelector("#divBoutons").innerHTML;
+            document.querySelector("#divBoutons").innerHTML = /*html*/`<a id="boutonSupprimerFiltre" class="bouton">Supprimer filtre</a>`+divBoutonsContenu
+
         });
     });
 }
