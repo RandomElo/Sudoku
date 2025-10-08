@@ -5,7 +5,7 @@
     --toggle-bg: #1a1a1a;
     --toggle-thumb: #fff;
     --vert-validation: mediumseagreen;
-    --mise-avant-cellule: #b8b8b8ff;
+    --mise-avant-cellule: #b8b8b8;
 }
 
 .dark-mode {
@@ -116,6 +116,14 @@ body {
 #titreNavbar {
     cursor: pointer;
 }
+
+#divOptions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
 main {
     #divResultat {
         display: flex;
@@ -181,10 +189,12 @@ main {
                 animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
             }
             /* Gestion du style lors de la mise en avant des chiffres commun */
-            .celluleCommune, .celluleAnnexe {
+            .celluleCommune,
+            .celluleAnnexe {
                 background-color: var(--mise-avant-cellule);
+
                 input {
-                    background-color: var(--mise-avant-cellule);
+                    background-color: var(--mise-avant-cellule-transparente);
                 }
             }
         }
@@ -207,6 +217,9 @@ main {
         #selectDifficulte {
             margin-left: 8px;
         }
+    }
+    #boutonSupprimerFiltre {
+        margin-bottom: 13px;
     }
 }
 
@@ -247,10 +260,4 @@ main {
 /* Translation : largeur totale - taille du bouton - marge gauche */
 .dark-mode .toggle-thumb {
     transform: translateX(47px); /* 85 - 30 - 8 ≈ 47 */
-}
-#divOptions {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 25px;
 }

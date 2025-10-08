@@ -1,7 +1,0 @@
-quand j'ajoute un chiffre il n'est pas détecter par mon truc qui surligne les chiffres
-
-quand je dit que c'est faux j'ai l'imrpession que l'on ne surveille plus le input verifier le prbl
-
-faire en sorte quand je clique sur un input ca fasse des traits plus clair pour dire ou c'est impossible de mettre le chiffre
-
-verifier le probleme lors du clique sur un numéro

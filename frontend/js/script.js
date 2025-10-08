@@ -46,14 +46,21 @@ function afficherSudoku(element, type = "string", affichage) {
     }
 
     // Permet de vérifier si la grille est entièrement remplis
-    function verifierFin() {
+    function verifierFin(type) {
         const tableau = recuperationGrille();
         for (const ligne of tableau) {
             for (const colonne of ligne) {
                 if (colonne == "-") {
+                    if (type == "verificateur") {
+                        return false;
+                    }
                     return;
                 }
             }
+        }
+
+        if (type == "verificateur") {
+            return true;
         }
         document.querySelector("#divBoutonsPrincipale").style.display = "none";
         lancerConfettis();
@@ -86,6 +93,197 @@ function afficherSudoku(element, type = "string", affichage) {
         } else {
             alert("Erreur lors de la récupération d'indice");
         }
+    }
+
+    // Permet de lancer les addEventListeners
+    function surveillanceCliqueBoutons() {
+        document.querySelector("#boutonRemplissageAutomatique").addEventListener("click", remplissageAutomatique);
+
+        document.querySelector("#boutonIndice").addEventListener("click", async () => {
+            const requete = await fetch("http://localhost:3000/indice", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(recuperationGrille()),
+            });
+            if (requete.ok) {
+                const reponse = await requete.json();
+                document.querySelector(`[data-l="${reponse.coordonnees.l}"][data-c="${reponse.coordonnees.c}"]`).innerText = reponse.indice;
+                verifierFin();
+            } else {
+                alert("Erreur lors du remplissage automatique de la grille");
+            }
+        });
+
+        document.querySelector("#boutonGenererAutre").addEventListener("click", async () => {
+            console.log("coucou");
+            const difficile = document.querySelector("#selectDifficulte").value;
+            const requete = await fetch(`http://localhost:3000/generation-sudoku/${difficile}`);
+            if (requete.ok) {
+                const reponse = await requete.json();
+                afficherSudoku(reponse);
+
+                let valeur;
+                switch (difficile) {
+                    case "easy":
+                        valeur = "Facile";
+                        break;
+                    case "medium":
+                        valeur = "Moyen";
+                        break;
+                    case "hard":
+                        valeur = "Difficile";
+                        break;
+                    case "expert":
+                        valeur = "Expert";
+                        break;
+                    default:
+                        break;
+                }
+                document.querySelector("#titreMain").innerText = "Sudoku - " + valeur;
+            } else {
+                alert("Erreur lors de la récupération du sudoku");
+            }
+        });
+    }
+
+    // Permet de gérer l'aide quand je clique sur un numéro
+    function gestionAide() {
+        const cellules = document.querySelectorAll("td");
+        const cellulesSansInput = Array.from(cellules).filter((td) => !td.querySelector("input"));
+
+        cellulesSansInput.forEach((cellule) => {
+            cellule.addEventListener("click", (e) => {
+                // Je verifie que le sudoku n'est pas fini
+                if (verifierFin("verificateur")) {
+                    return;
+                }
+
+                const valeurCellule = e.target.innerText;
+
+                // Je verifie qu'il y ai pas de bouton supprimer filtre
+                if (document.querySelector("#boutonSupprimerFiltre")) {
+                    document.querySelector("#boutonSupprimerFiltre").remove();
+                }
+                // Si la cellule sur lequel je clique contient dejs la classe cellule commune laors je supprime toutes les classes
+                if (e.target.classList.contains("celluleCommune")) {
+                    for (const cellule of cellules) {
+                        cellule.classList.remove("celluleCommune");
+                        cellule.classList.remove("celluleAnnexe");
+                    }
+                    return;
+                }
+
+                // Je met à toutes les cellules un fond blanc
+                for (const cellule of cellules) {
+                    cellule.classList.remove("celluleCommune");
+                    cellule.classList.remove("celluleAnnexe");
+                }
+
+                const cellulesCorrespondante = Array.from(cellules).filter((td) => td.textContent == valeurCellule);
+
+                for (const cellule of cellulesCorrespondante) {
+                    cellule.classList.add("celluleCommune");
+                    const l = Number(cellule.dataset.l);
+                    const c = Number(cellule.dataset.c);
+
+                    const cellulesCommuneHorizontale = document.querySelectorAll(`[data-l="${l}"]`);
+
+                    for (const c of cellulesCommuneHorizontale) {
+                        if (cellule.dataset != c.dataset) {
+                            c.classList.add("celluleAnnexe");
+                        }
+                    }
+
+                    const cellulesCommuneVerticale = document.querySelectorAll(`[data-c="${c}"]`);
+
+                    for (const c of cellulesCommuneVerticale) {
+                        if (cellule.dataset != c.dataset) {
+                            c.classList.add("celluleAnnexe");
+                        }
+                    }
+                }
+                // Ajout du bouton pour la suppression du filtre
+                const divBoutonsContenu = document.querySelector("#divBoutons").innerHTML;
+                document.querySelector("#divBoutons").innerHTML = /*html*/ `<a id="boutonSupprimerFiltre" class="bouton">Supprimer filtre</a>` + divBoutonsContenu;
+                surveillanceCliqueBoutons();
+
+                const boutonSupprimerFiltre = document.querySelector("#boutonSupprimerFiltre");
+                boutonSupprimerFiltre.addEventListener("click", () => {
+                    document.querySelector("#boutonSupprimerFiltre").remove();
+                    for (const element of document.querySelectorAll("td")) {
+                        element.classList.remove("celluleCommune");
+                        element.classList.remove("celluleAnnexe");
+                    }
+                });
+            });
+        });
+    }
+
+    function gestionVerification() {
+        document.querySelectorAll(".inputCaseSudoku").forEach((input) => {
+            input.addEventListener("input", async (e) => {
+                e.preventDefault();
+                if (isNaN(e.target.value)) {
+                    e.target.value = "";
+                    return;
+                }
+                if (e.target.value.length > 1) {
+                    e.target.value = e.target.value.slice(1, 2);
+                }
+
+                if (affichage !== "resolution") {
+                    const corpsRequete = {
+                        valeur: e.target.value,
+                        coordonnees: e.target.parentNode.dataset,
+                        grille: recuperationGrille(e.target.parentNode.dataset),
+                    };
+                    e.target.value = "";
+                    const requete = await fetch("http://localhost:3000/verification-valeur", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(corpsRequete),
+                    });
+                    if (requete.ok) {
+                        const reponse = await requete.json();
+                        const td = e.target.parentNode;
+
+                        if (reponse) {
+                            td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMBonneReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5" /></svg></div>`;
+
+                            // Forcer le DOM à reconnaître le nouvel élément
+                            const div = td.querySelector(".divSvgReponse");
+                            div.offsetHeight;
+                            div.classList.add("show");
+
+                            setTimeout(() => {
+                                e.target.focus();
+                                td.innerText = corpsRequete.valeur;
+                                gestionAide();
+                            }, 2000);
+                        } else {
+                            td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMauvaiseReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>`;
+
+                            const div = td.querySelector(".divSvgReponse");
+                            div.classList.add("show");
+                            div.offsetHeight;
+
+                            setTimeout(() => {
+                                td.innerHTML = `<input type="text" class="inputCaseSudoku" />`;
+                                td.children[0].focus();
+                                gestionVerification();
+                            }, 2000);
+                        }
+                        verifierFin();
+                    } else {
+                        alert("Erreur lors de la verification de la valeur saissie");
+                    }
+                }
+            });
+        });
     }
 
     let lignes = [];
@@ -132,173 +330,14 @@ function afficherSudoku(element, type = "string", affichage) {
         </div>`;
 
         // Gestion des cliques sur les boutons actions
-        document.querySelector("#boutonRemplissageAutomatique").addEventListener("click", remplissageAutomatique);
-
-        document.querySelector("#boutonIndice").addEventListener("click", async () => {
-            const requete = await fetch("http://localhost:3000/indice", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(recuperationGrille()),
-            });
-            if (requete.ok) {
-                const reponse = await requete.json();
-                document.querySelector(`[data-l="${reponse.coordonnees.l}"][data-c="${reponse.coordonnees.c}"]`).innerText = reponse.indice;
-                verifierFin();
-            } else {
-                alert("Erreur lors du remplissage automatique de la grille");
-            }
-        });
-
-        document.querySelector("#boutonGenererAutre").addEventListener("click", async () => {
-            const difficile = document.querySelector("#selectDifficulte").value;
-            const requete = await fetch(`http://localhost:3000/generation-sudoku/${difficile}`);
-            if (requete.ok) {
-                const reponse = await requete.json();
-                afficherSudoku(reponse);
-
-                let valeur;
-                switch (difficile) {
-                    case "easy":
-                        valeur = "Facile";
-                        break;
-                    case "medium":
-                        valeur = "Moyen";
-                        break;
-                    case "hard":
-                        valeur = "Difficile";
-                        break;
-                    case "expert":
-                        valeur = "Expert";
-                        break;
-                    default:
-                        break;
-                }
-                document.querySelector("#titreMain").innerText = "Sudoku - " + valeur;
-            } else {
-                alert("Erreur lors de la récupération du sudoku");
-            }
-        });
+        surveillanceCliqueBoutons();
     } else if (affichage == "resolution") {
         document.querySelector("#divBoutons").innerHTML = /*html*/ `<a id="boutonResoudre" class="bouton">Résoudre le sudoku</a>`;
         document.querySelector("#boutonResoudre").addEventListener("click", remplissageAutomatique);
     }
 
-    // Gestion de l'ajout des numéro dans un input
-    document.querySelectorAll(".inputCaseSudoku").forEach((input) => {
-        input.addEventListener("input", async (e) => {
-            e.preventDefault();
-            if (isNaN(e.target.value)) {
-                e.target.value = "";
-                return;
-            }
-            if (e.target.value.length > 1) {
-                e.target.value = e.target.value.slice(1, 2);
-            }
-
-            if (affichage !== "resolution") {
-                const corpsRequete = {
-                    valeur: e.target.value,
-                    coordonnees: e.target.parentNode.dataset,
-                    grille: recuperationGrille(e.target.parentNode.dataset),
-                };
-                e.target.value = "";
-                const requete = await fetch("http://localhost:3000/verification-valeur", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(corpsRequete),
-                });
-                if (requete.ok) {
-                    const reponse = await requete.json();
-                    console.log(reponse);
-                    const td = e.target.parentNode;
-
-                    if (reponse) {
-                        e.target.blur();
-                        // td.innerText = corpsRequete.valeur;
-                        td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMBonneReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5" /></svg></div>`;
-
-                        // Forcer le DOM à reconnaître le nouvel élément
-                        const div = td.querySelector(".divSvgReponse");
-                        div.offsetHeight;
-                        div.classList.add("show");
-
-                        setTimeout(() => {
-                            e.target.focus();
-                            td.innerText = corpsRequete.valeur;
-                        }, 2000);
-                    } else {
-                        td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMauvaiseReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>`;
-
-                        // Forcer le DOM à reconnaître le nouvel élément
-                        const div = td.querySelector(".divSvgReponse");
-                        div.classList.add("show");
-                        div.offsetHeight;
-
-                        setTimeout(() => {
-                            td.innerHTML = `<input type="text" class="inputCaseSudoku" />`;
-                            td.children[0].focus();
-                        }, 2000);
-                    }
-                    verifierFin();
-                } else {
-                    alert("Erreur lors de la verification de la valeur saissie");
-                }
-            }
-        });
-    });
-
-    // Gestion du clique sur les nombres validées
-    const cellules = document.querySelectorAll("td");
-    const cellulesSansInput = Array.from(cellules).filter((td) => !td.querySelector("input"));
-
-    cellulesSansInput.forEach((cellule) => {
-        cellule.addEventListener("click", (e) => {
-            const valeurCellule = e.target.innerText;
-            if (e.target.classList.contains("celluleCommune")) {
-                for (const cellule of cellules) {
-                    cellule.classList.remove("celluleCommune");
-                    cellule.classList.remove("celluleAnnexe");
-                }
-                return;
-            }
-            // Je met à toutes les cellules un fond blanc
-            for (const cellule of cellules) {
-                cellule.classList.remove("celluleCommune");
-            }
-
-            const cellulesCorrespondante = Array.from(cellules).filter((td) => td.textContent == valeurCellule);
-
-            for (const cellule of cellulesCorrespondante) {
-                cellule.classList.add("celluleCommune");
-                const l = Number(cellule.dataset.l);
-                const c = Number(cellule.dataset.c);
-
-                const cellulesCommuneHorizontale = document.querySelectorAll(`[data-l="${l}"]`);
-
-                for (const c of cellulesCommuneHorizontale) {
-                    if (cellule.dataset != c.dataset) {
-                        c.classList.add("celluleAnnexe");
-                    }
-                }
-
-                const cellulesCommuneVerticale = document.querySelectorAll(`[data-c="${c}"]`);
-
-                for (const c of cellulesCommuneVerticale) {
-                    if (cellule.dataset != c.dataset) {
-                        c.classList.add("celluleAnnexe");
-                    }
-                }
-            }
-            // Ajout du bouton pour la suppression du filtre
-            const divBoutonsContenu = document.querySelector("#divBoutons").innerHTML;
-            document.querySelector("#divBoutons").innerHTML = /*html*/`<a id="boutonSupprimerFiltre" class="bouton">Supprimer filtre</a>`+divBoutonsContenu
-
-        });
-    });
+    gestionVerification();
+    gestionAide();
 }
 
 // Fonction qui s'occupe entièrement de la résolution du sudoku
