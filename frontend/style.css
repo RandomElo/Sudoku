@@ -1,15 +1,19 @@
 :root {
     --bg-color: #fff;
     --text-color: #000;
+    --bg-element: #373737;
     --toggle-bg: #1a1a1a;
     --toggle-thumb: #fff;
+    --vert-validation: mediumseagreen;
 }
 
 .dark-mode {
     --bg-color: #282c35;
     --text-color: #fff;
+    --bg-element: #fff;
     --toggle-bg: #444;
     --toggle-thumb: #ddd;
+    --vert-validation: palegreen;
 }
 
 * {
@@ -19,13 +23,14 @@
     box-sizing: border-box;
 }
 
+/* Style bouton */
 .bouton {
     display: inline-block;
     padding: 12px 20px;
     font-size: 16px;
     font-weight: bold;
     color: var(--bg-color);
-    background-color: var(--text-color);
+    background-color: var(--bg-element);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -48,6 +53,20 @@
 .bouton:active {
     transform: translateY(0);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Syle select */
+.select {
+    color: var(--bg-color);
+    background-color: var(--bg-element);
+    border: none;
+    border-radius: 8px;
+    width: 150px;
+    height: 35px;
+    padding: 5px;
+    padding-left: 8px;
+    font-size: 1em;
+    cursor: pointer;
 }
 
 h1 {
@@ -100,7 +119,7 @@ main {
                 color: red;
             }
             td.validiteSudoku input {
-                color: green;
+                color: var(--vert-validation);
             }
             tr:nth-child(3),
             tr:nth-child(6) {
@@ -126,6 +145,28 @@ main {
                 outline: none;
                 box-shadow: none;
             }
+            .celluleResolueAuto {
+                color: var(--vert-validation);
+                font-weight: bold;
+            }
+            .divSvgReponse {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                opacity: 0;
+                transform: scale(0.6);
+                transition: opacity 0.5s ease, transform 0.5s ease;
+            }
+            .divImgMauvaiseReponse {
+                color: red;
+            }
+            .divImgMBonneReponse {
+                color: var(--vert-validation);
+            }
+            .divSvgReponse.show {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     }
     #divBoutons {
@@ -141,6 +182,11 @@ main {
     #divBoutonsPrincipale {
         margin-top: 7px;
         margin-bottom: 20px;
+    }
+    #divBoutonGenererAutre {
+        #selectDifficulte {
+            margin-left: 8px;
+        }
     }
 }
 
@@ -182,7 +228,7 @@ main {
 .dark-mode .toggle-thumb {
     transform: translateX(47px); /* 85 - 30 - 8 ≈ 47 */
 }
-#divTest {
+#divOptions {
     display: flex;
     justify-content: center;
     align-items: center;

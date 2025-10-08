@@ -44,6 +44,7 @@ function afficherSudoku(element, type = "string", affichage) {
         }
         return resultat;
     }
+
     // Permet de vérifier si la grille est entièrement remplis
     function verifierFin() {
         const tableau = recuperationGrille();
@@ -69,7 +70,17 @@ function afficherSudoku(element, type = "string", affichage) {
         });
         if (requete.ok) {
             const reponse = await requete.json();
-            afficherSudoku(reponse, (type = "tableau"));
+            for (const idLigne in reponse) {
+                const ligne = reponse[idLigne];
+                for (const idCellule in ligne) {
+                    let cellule = document.querySelector(`[data-l="${idLigne}"][data-c="${idCellule}"]`);
+                    const ancienneValeur = cellule.textContent;
+                    if (ancienneValeur != ligne[idCellule]) {
+                        cellule.innerText = ligne[idCellule];
+                        cellule.classList.add("celluleResolueAuto");
+                    }
+                }
+            }
             document.querySelector("#divBoutonsPrincipale").style.display = "none";
             lancerConfettis();
         } else {
@@ -110,7 +121,15 @@ function afficherSudoku(element, type = "string", affichage) {
             <a id="boutonIndice" class="bouton">Indice</a>
         <a id="boutonRemplissageAutomatique" class="bouton">Remplissage automatique</a>
         </div>
-        <a id="boutonGenererAutre" class="bouton">Générer un autre</a>`;
+        <div id="divBoutonGenererAutre">
+            <a id="boutonGenererAutre" class="bouton">Générer un autre</a>
+            <select id="selectDifficulte" class="select">
+                <option value="easy">Difficulté facile</option>
+                <option value="medium">Difficulté moyen</option>
+                <option value="hard">Difficulté difficile</option>
+                <option value="expert">Difficulté expert</option>
+            </select>
+        </div>`;
 
         // Gestion des cliques sur les boutons actions
         document.querySelector("#boutonRemplissageAutomatique").addEventListener("click", remplissageAutomatique);
@@ -132,21 +151,38 @@ function afficherSudoku(element, type = "string", affichage) {
             }
         });
 
-        document.querySelector("#boutonGenererAutre").addEventListener("click", async (e) => {
-            e.preventDefault();
-            const requete = await fetch("http://localhost:3000/generation-sudoku/easy");
+        document.querySelector("#boutonGenererAutre").addEventListener("click", async () => {
+            const difficile = document.querySelector("#selectDifficulte").value;
+            const requete = await fetch(`http://localhost:3000/generation-sudoku/${difficile}`);
             if (requete.ok) {
                 const reponse = await requete.json();
                 afficherSudoku(reponse);
+
+                let valeur;
+                switch (difficile) {
+                    case "easy":
+                        valeur = "Facile";
+                        break;
+                    case "medium":
+                        valeur = "Moyen";
+                        break;
+                    case "hard":
+                        valeur = "Difficile";
+                        break;
+                    case "expert":
+                        valeur = "Expert";
+                        break;
+                    default:
+                        break;
+                }
+                document.querySelector("#titreMain").innerText = "Sudoku - " + valeur;
             } else {
                 alert("Erreur lors de la récupération du sudoku");
             }
         });
     } else if (affichage == "resolution") {
         document.querySelector("#divBoutons").innerHTML = /*html*/ `<a id="boutonResoudre" class="bouton">Résoudre le sudoku</a>`;
-        document.querySelector("#boutonResoudre").addEventListener("click", async () => {
-            remplissageAutomatique();
-        });
+        document.querySelector("#boutonResoudre").addEventListener("click", remplissageAutomatique);
     }
 
     // Gestion de l'ajout des numéro dans un input
@@ -167,7 +203,7 @@ function afficherSudoku(element, type = "string", affichage) {
                     coordonnees: e.target.parentNode.dataset,
                     grille: recuperationGrille(e.target.parentNode.dataset),
                 };
-
+                e.target.value = "";
                 const requete = await fetch("http://localhost:3000/verification-valeur", {
                     method: "POST",
                     headers: {
@@ -178,20 +214,39 @@ function afficherSudoku(element, type = "string", affichage) {
                 if (requete.ok) {
                     const reponse = await requete.json();
                     console.log(reponse);
+                    const td = e.target.parentNode;
+
                     if (reponse) {
-                        e.target.parentNode.classList.add("validiteSudoku");
                         e.target.blur();
+                        // td.innerText = corpsRequete.valeur;
+                        td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMBonneReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5" /></svg></div>`;
+
+                        // Forcer le DOM à reconnaître le nouvel élément
+                        const div = td.querySelector(".divSvgReponse");
+
+                        // Utiliser un setTimeout très court pour déclencher la transition
                         setTimeout(() => {
-                            e.target.parentNode.classList.remove("validiteSudoku");
-                            e.target.parentNode.innerText = corpsRequete.valeur;
+                            div.classList.add("show");
+                        }, 10);
+
+                        setTimeout(() => {
+                            e.target.focus();
+                            td.innerText = corpsRequete.valeur;
                         }, 2000);
                     } else {
-                        e.target.parentNode.classList.add("erreurSudoku");
-                        e.target.blur();
+                        td.innerHTML = /*html*/ `<div class="divSvgReponse divImgMauvaiseReponse"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>`;
+                        
+                        // Forcer le DOM à reconnaître le nouvel élément
+                        const div = td.querySelector(".divSvgReponse");
+
+                        // Utiliser un setTimeout très court pour déclencher la transition
                         setTimeout(() => {
-                            e.target.parentNode.classList.remove("erreurSudoku");
-                            e.target.value = "";
-                            e.target.focus();
+                            div.classList.add("show");
+                        }, 10);
+
+                        setTimeout(() => {
+                            td.innerHTML = `<input type="text" class="inputCaseSudoku" />`;
+                            td.children[0].focus();
                         }, 2000);
                     }
                     verifierFin();
@@ -249,16 +304,12 @@ function resolutionSudoku() {
             let c = Number(e.target.parentNode.dataset.c);
             let futureCellule;
             if (e.key == "ArrowUp") {
-                // futureCellule = document.querySelector(`[data-l="${l - 1}"][data-c="${c}"]`);
                 futureCellule = document.querySelector(`[data-l="${verificateurCoordonnees(l, "moins")}"][data-c="${c}"]`);
             } else if (e.key == "ArrowLeft") {
-                // futureCellule = document.querySelector(`[data-l="${l}"][data-c="${c - 1}"]`);
                 futureCellule = document.querySelector(`[data-l="${l}"][data-c="${verificateurCoordonnees(c, "moins")}"]`);
             } else if (e.key == "ArrowRight") {
-                // futureCellule = document.querySelector(`[data-l="${l}"][data-c="${c + 1}"]`);
                 futureCellule = document.querySelector(`[data-l="${l}"][data-c="${verificateurCoordonnees(c, "plus")}"]`);
             } else if (e.key == "ArrowDown") {
-                // futureCellule = document.querySelector(`[data-l="${l + 1}"][data-c="${c}"]`);
                 futureCellule = document.querySelector(`[data-l="${verificateurCoordonnees(l, "plus")}"][data-c="${c}"]`);
             } else {
                 return;
@@ -271,11 +322,11 @@ function resolutionSudoku() {
 
 // Fonction qui gère la requete de récupération de la grille
 async function generationSudoku() {
-    document.querySelector("#titreMain").innerText = "Générateur de sudoku";
     const requete = await fetch("http://localhost:3000/generation-sudoku/easy");
     if (requete.ok) {
         const reponse = await requete.json();
         afficherSudoku(reponse);
+        document.querySelector("#titreMain").innerText = "Sudoku - Facile";
     } else {
         alert("Erreur lors de la récupération du sudoku");
     }
@@ -288,6 +339,7 @@ function surveillanceCliqueBoutonGeneration() {
 
 // Gestion du reset de la page
 document.querySelector("#titreNavbar").addEventListener("click", () => {
+    document.querySelector("#titreMain").innerText = "Générateur de sudoku";
     document.querySelector("#divResultat").innerHTML = "";
     document.querySelector("#divBoutons").innerHTML = `<a id="boutonGeneration" class="bouton">Générer un sudoku</a>`;
     surveillanceCliqueBoutonGeneration();
